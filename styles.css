@@ -597,6 +597,9 @@ button { font-family: inherit; }
   transition: border-color 0.2s;
 }
 .field input:focus, .field select:focus { border-color: color-mix(in srgb, var(--accent) 65%, transparent); }
+/* el desplegable nativo pintaba opciones blanco-sobre-blanco: forzamos tema oscuro */
+.field select { color-scheme: dark; }
+.field select option { background: #16171c; color: #f4f4f6; }
 .modal-actions {
   display: flex;
   gap: 10px;

@@ -190,11 +190,7 @@ function SettingsDrawer(props) {
         <div className="drawer-sec">
           <div className="sec-t">Fondo</div>
           <div className="wp-grid">
-            {WALLPAPERS.map((w) => (
-              <button key={w.id} className={"wp" + (wallpaper.id === w.id ? " on" : "")}
-                style={{ background: w.type === "image" ? `url("${w.thumb}") center/cover` : w.thumb }}
-                onClick={() => setWallpaper(w)} title={w.id} />
-            ))}
+            {/* fondos subidos primero (el más reciente arriba), luego los fijos */}
             {userWallpapers.map((w) => (
               <div key={w.id} className={"wp user" + (wallpaper.id === w.id ? " on" : "")}
                 style={w.type === "video" ? { background: "#0a0a0c" } : { background: `url("${w.thumb}") center/cover` }}
@@ -203,6 +199,11 @@ function SettingsDrawer(props) {
                 {w.animated && <span className="wp-badge">{w.type === "video" ? "▶" : "GIF"}</span>}
                 <button className="wp-del" onClick={(e) => { e.stopPropagation(); delUserWp(w.id); }}>×</button>
               </div>
+            ))}
+            {WALLPAPERS.map((w) => (
+              <button key={w.id} className={"wp" + (wallpaper.id === w.id ? " on" : "")}
+                style={{ background: w.type === "image" ? `url("${w.thumb}") center/cover` : w.thumb }}
+                onClick={() => setWallpaper(w)} title={w.id} />
             ))}
           </div>
 
