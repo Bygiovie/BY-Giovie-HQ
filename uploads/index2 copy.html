@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>By Giovie</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: url("karina-aespa-dirty-work-iphone-16-pro-4k-wallpaper-uhdpaper.com-350@5@g.png") no-repeat center center fixed;
+      background-size: cover;
+      font-family: "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    /* Logo */
+    .logo {
+      position: absolute;
+      bottom: 2%;
+      left: 4%;
+      font-size: clamp(10px, 1vw, 18px);
+      color: white;
+      text-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+      font-weight: 700;
+    }
+
+    /* Caja de búsqueda */
+    .search-container {
+      position: absolute;
+      top: 7%;
+      right: 10%;
+      transform: translateY(-50%);
+      width: clamp(180px, 25vw, 350px);
+    }
+
+    input[type="search"] {
+      width: 100%;
+      padding: clamp(8px, 1vw, 14px) clamp(12px, 1.5vw, 20px);
+      font-size: clamp(12px, 1vw, 16px);
+      border: none;
+      border-radius: 30px;
+      outline: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Accesos directos */
+    .shortcuts {
+      position: absolute;
+      bottom: 3%;
+      right: 3%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: clamp(8px, 1vw, 15px);
+    }
+
+    .shortcut {
+      width: clamp(38px, 3vw, 55px);
+      height: clamp(38px, 3vw, 55px);
+      background-color: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(6px);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      transition: 0.25s;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+    }
+
+    .shortcut:hover {
+      background-color: rgba(255, 255, 255, 0.35);
+      transform: scale(1.1);
+    }
+
+    .shortcut svg {
+      width: clamp(18px, 2vw, 28px);
+      height: clamp(18px, 2vw, 28px);
+    }
+
+    /* ---- ESTILOS PARA EL MENÚ DE ENGRANAJE ---- */
+    #menuButton {
+      position: absolute;
+      top: 2%; left: 2%;
+      font-size: clamp(12px, 1.5vw, 18px);
+      background: none; border: none;
+      color: white; cursor: pointer;
+      text-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+      transition: transform 0.2s ease;
+    }
+    #menuButton:hover { transform: scale(1.2); }
+
+    #controlMenu {
+      position: absolute;
+      top: 6%; left: 2%;
+      background-color: rgba(0, 0, 0, 0.75);
+      color: rgb(255, 255, 255);
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-size: clamp(10px, 1vw, 14px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(5px);
+    }
+    #controlMenu label { display: block; margin: 6px 0; cursor: pointer; }
+    .hidden { display: none; }
+    
+    /* ===== ESTILOS PARA EL CAMBIADOR DE INTERFAZ ===== */
+    .switcher-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      display: none; /* Oculto por defecto */
+      justify-content: center; align-items: center;
+      z-index: 1000;
+      animation: fadeIn 0.3s ease;
+    }
+    .switcher-overlay.visible { display: flex; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .switcher-content {
+      background: rgba(30, 30, 30, 0.8);
+      padding: 2rem 3rem; border-radius: 1rem;
+      border: 1px solid rgba(255,255,255,0.2);
+      position: relative; width: 90%; max-width: 400px;
+      text-align: center;
+    }
+    .switcher-content h2 { margin-top: 0; color: white; }
+
+    #interfaceList { list-style: none; padding: 0; margin: 2rem 0; }
+    #interfaceList a {
+      display: block; padding: 1rem; margin: 0.5rem 0;
+      border-radius: 0.5rem; text-decoration: none;
+      font-weight: 600; color: #ccc;
+      background: rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+    }
+    #interfaceList a:hover {
+      background: #00BFFF; color: #000;
+      transform: scale(1.05);
+    }
+
+    .close-btn {
+      position: absolute; top: 15px; right: 15px;
+      background: none; border: none;
+      color: #aaa; font-size: 2.5rem; line-height: 1;
+      cursor: pointer; transition: transform 0.2s ease;
+    }
+    .close-btn:hover { transform: scale(1.2); color: white; }
+
+    #switchInterfaceBtn {
+      width: 100%;
+      background: #00BFFF;
+      border: none; border-radius: 5px; padding: 8px; margin-top: 8px;
+      color: #000; font-weight: 600; cursor: pointer;
+    }
+
+
+  </style>
+</head>
+<body>
+
+  <!-- Botón y menú del engranaje -->
+  <button id="menuButton" title="Opciones">⚙️</button>
+  <div id="controlMenu" class="hidden">
+    <label><input type="checkbox" id="toggleSearch" checked>caja de búsqueda</label>
+    <label><input type="checkbox" id="toggleShortcuts" checked>accesos directos</label>
+    <hr style="border-color: rgba(255,255,255,0.2); margin: 8px 0;">
+    <button id="switchInterfaceBtn">Cambiar Interfaz</button>
+  </div>
+
+  <div class="logo">By Giovie</div>
+
+  <div class="search-container">
+    <input type="search" placeholder="Buscar en Google o escribe una URL" autofocus
+      onkeydown="if(event.key==='Enter'){window.location.href='https://www.google.com/search?q='+encodeURIComponent(this.value);}">
+  </div>
+
+  <div class="shortcuts">
+    <a class="shortcut" href="https://www.youtube.com" target="_self" title="YouTube" ><svg viewBox="0 0 24 24" fill="#FF0000"><path d="M23.5 6.2s-.2-1.6-.8-2.3c-.8-.9-1.7-.9-2.1-.9C16.9 2.7 12 2.7 12 2.7s-4.9 0-8.6.3c-.4 0-1.3 0-2.1.9-.6.7-.8 2.3-.8 2.3S0 8.1 0 10v4c0 1.9.5 3.8.5 3.8s.2 1.6.8 2.3c.8.9 1.8.9 2.3 1 1.7.1 7.4.3 8.4.3s8.6 0 8.6-.3c.4 0 1.3 0 2.1-.9.6-.7.8-2.3.8-2.3s.5-1.9.5-3.8v-4c0-1.9-.5-3.8-.5-3.8zM9.6 14.8V9.2l5.9 2.8-5.9 2.8z"/></svg></a>
+    <a class="shortcut" href="https://mail.google.com" target="_self" title="Gmail" ><svg viewBox="0 0 24 24"><path fill="#EA4335" d="M12 13.5 1.5 6.75v10.5c0 .825.675 1.5 1.5 1.5h18c.825 0 1.5-.675 1.5-1.5V6.75L12 13.5z"/><path fill="#FBBC04" d="M12 13.5 1.5 6.75 12 12l10.5-5.25L12 13.5z"/><path fill="#34A853" d="M22.5 6.75V6c0-.825-.675-1.5-1.5-1.5H3c-.825 0-1.5.675-1.5 1.5v.75L12 12l10.5-5.25z"/><path fill="#4285F4" d="M1.5 6.75V18c0 .825.675 1.5 1.5 1.5h18c.825 0 1.5-.675 1.5-1.5V6.75L12 12 1.5 6.75z"/></svg></a>
+    <a class="shortcut" href="https://web.whatsapp.com" target="_self" title="WhatsApp Web"><svg viewBox="0 0 24 24"><path fill="#25D366" d="M12.04 0A11.93 11.93 0 0 0 .11 12.13c0 2.12.55 4.19 1.61 6.01L0 24l6.11-1.61a12.07 12.07 0 0 0 5.93 1.54h.01A11.93 11.93 0 0 0 12.04 0zm5.57 17.16c-.23.65-1.33 1.26-1.82 1.33-.47.07-1.07.1-1.73-.11-.4-.12-.91-.29-1.57-.57-2.76-1.2-4.56-3.96-4.7-4.15-.14-.19-1.12-1.49-1.12-2.85 0-1.36.71-2.03.96-2.3.25-.27.54-.34.72-.34.18 0 .36 0 .52.01.17.01.39-.06.61.47.23.58.78 2  .85 2.15.07.15.12.33.02.52-.1.19-.15.31-.29.47-.14.16-.3.35-.43.47-.14.12-.29.26-.12.51.17.26.76 1.25 1.64 2.03 1.13 1.02 2.08 1.34 2.37 1.49.29.15.46.12.63-.07.17-.19.73-.85.92-1.14.19-.29.39-.24.66-.14.27.1 1.72.81 2.01.96.29.15.48.22.55.34.07.12.07.71-.16 1.36z"/></svg></a>
+    <a class="shortcut" href="https://www.instagram.com" target="_self" title="Instagram" ><svg viewBox="0 0 24 24" fill="#E1306C"><path d="M7.5 2C4.46 2 2 4.46 2 7.5v9C2 19.54 4.46 22 7.5 22h9c3.04 0 5.5-2.46 5.5-5.5v-9C22 4.46 19.54 2 16.5 2h-9zm0 2h9c1.93 0 3.5 1.57 3.5 3.5v9c0 1.93-1.57 3.5-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5v-9C4 5.57 5.57 4 7.5 4zM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm4.75-.75a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5z"/></svg></a>
+    <a class="shortcut" href="https://open.spotify.com" target="_self" title="Spotify"><svg viewBox="0 0 24 24"><path fill="#1DB954" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.485 17.299a.749.749 0 0 1-1.032.25c-2.829-1.735-6.39-2.128-10.594-1.16a.75.75 0 0 1-.34-1.462c4.572-1.065 8.56-.618 11.648 1.254.356.219.47.684.318 1.118zm1.469-3.262a.938.938 0 0 1-1.29.313c-3.245-1.993-8.18-2.57-11.983-1.4a.939.939 0 1 1-.54-1.799c4.338-1.302 9.807-.658 13.57 1.676.446.274.59.86.243 1.21zm.13-3.455c-3.705-2.198-9.84-2.395-13.39-1.304a1.125 1.125 0 0 1-.662-2.148c4.093-1.263 11.005-1.017 15.297 1.542a1.125 1.125 0 0 1-1.145 1.91z"/></svg></a>
+    <a class="shortcut" href="https://github.com/Bygiovie/interfaces-google" target="_self" title="GitHub" ><svg viewBox="0 0 24 24" fill="#FFFFFF"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg></a>
+
+  </div>
+  
+  <!-- Menú para cambiar de Interfaz (Oculto por defecto) -->
+  <div id="interfaceSwitcher" class="switcher-overlay">
+    <div class="switcher-content">
+      <h2>Selecciona una Interfaz</h2>
+      <ul id="interfaceList"></ul>
+      <button id="closeSwitcherBtn" class="close-btn">&times;</button>
+    </div>
+  </div>
+
+  <script>
+    // ===== ZONA DE CONFIGURACIÓN DE INTERFACES =====
+    // ¡Añade aquí todas tus interfaces! Cada una es una carpeta.
+    const interfaces = [
+      { name: "By giovie", path: "https://bygiovie.github.io/interfaces-google/By-Giovie/" },
+      { name: "tamandre", path: "https://bygiovie.github.io/interfaces-google/tamandre/" },
+      { name: "pruebas", path: "https://bygiovie.github.io/interfaces-google/pruebas/" },
+      { name: "ZEIA LABS", path: "https://bygiovie.github.io/interfaces-google/ZeiaLabs/" },
+      // Añade más aquí, ej: { name: "Interfaz para Ana", path: "../ana/" },
+    ];
+    // ===============================================
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // --- Lógica para el menú de engranaje ---
+      const menuButton = document.getElementById('menuButton');
+      const controlMenu = document.getElementById('controlMenu');
+      const toggleSearch = document.getElementById('toggleSearch');
+      const toggleShortcuts = document.getElementById('toggleShortcuts');
+      const searchContainer = document.querySelector('.search-container');
+      const shortcuts = document.querySelector('.shortcuts');
+
+      menuButton.onclick = (e) => { e.stopPropagation(); controlMenu.classList.toggle('hidden'); };
+      window.onclick = () => { controlMenu.classList.add('hidden'); };
+      toggleSearch.onchange = () => {
+        const visible = toggleSearch.checked;
+        searchContainer.style.display = visible ? 'block' : 'none';
+        localStorage.setItem('searchVisible', visible);
+      };
+      toggleShortcuts.onchange = () => {
+        const visible = toggleShortcuts.checked;
+        shortcuts.style.display = visible ? 'flex' : 'none';
+        localStorage.setItem('shortcutsVisible', visible);
+      };
+      const searchVisible = localStorage.getItem('searchVisible') ?? 'true';
+      const shortcutsVisible = localStorage.getItem('shortcutsVisible') ?? 'true';
+      searchContainer.style.display = searchVisible === 'false' ? 'none' : 'block';
+      shortcuts.style.display = shortcutsVisible === 'false' ? 'none' : 'flex';
+      toggleSearch.checked = searchVisible !== 'false';
+      toggleShortcuts.checked = shortcutsVisible !== 'false';
+      
+      // --- Lógica para el cambiador de interfaz ---
+      const switcherOverlay = document.getElementById('interfaceSwitcher');
+      const switchBtn = document.getElementById('switchInterfaceBtn');
+      const closeBtn = document.getElementById('closeSwitcherBtn');
+      const interfaceList = document.getElementById('interfaceList');
+
+      interfaces.forEach(interfaz => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.textContent = interfaz.name;
+        a.href = interfaz.path;
+        li.appendChild(a);
+        interfaceList.appendChild(li);
+      });
+
+      switchBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Evita que se cierre el menú de engranaje
+        switcherOverlay.classList.add('visible');
+      });
+      function closeSwitcher() { switcherOverlay.classList.remove('visible'); }
+      closeBtn.addEventListener('click', closeSwitcher);
+      switcherOverlay.addEventListener('click', (event) => {
+        if (event.target === switcherOverlay) closeSwitcher();
+      });
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+    document.querySelector("input[type='search']").focus();
+  });
+  </script>
+
+  <script>
+    window.CFTConfig = {
+      apiKey: 'AIzaSyC-FxlPEHVTIRKGl1OQl5f7QLStwFYG-YI',
+      serverUrl: 'https://cft-chatbot-production.up.railway.app',
+      position: 'bottom-left',
+      title: 'Asistente CFT',
+      subtitle: 'Región Coquimbo',
+      primaryColor: '#3b82f6',
+    };
+  </script>
+  <script src="https://cft-chatbot-production.up.railway.app/widget-v4.js"></script>
+</body>
+</html>
