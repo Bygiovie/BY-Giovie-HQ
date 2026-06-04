@@ -1,6 +1,6 @@
 /* app.jsx — grid layout, per-component config, customize mode, controls */
 
-const { useLocalStorage } = window;
+const { useLocalStorage, useIndexedState } = window;
 
 const COMPONENTS = [
   { id: "brand", label: "Marca" },
@@ -148,8 +148,10 @@ function App() {
   const [searchAlign, setSearchAlign] = useLocalStorage("bg_search_align", "left");
 
   const [shortcuts, setShortcuts] = useLocalStorage("bg_shortcuts", window.DEFAULT_SHORTCUTS);
-  const [wallpaper, setWallpaper] = useLocalStorage("bg_wallpaper", window.WALLPAPERS[0]);
-  const [userWallpapers, setUserWallpapers] = useLocalStorage("bg_user_wp", []);
+  // Fondos en IndexedDB: las imágenes en base64 superan el tope de localStorage
+  // (~5MB) y se perdían al recargar. IndexedDB las conserva.
+  const [wallpaper, setWallpaper] = useIndexedState("bg_wallpaper", window.WALLPAPERS[0]);
+  const [userWallpapers, setUserWallpapers] = useIndexedState("bg_user_wp", []);
 
   const [theme, setTheme] = useLocalStorage("bg_theme", "glass");
   const [accent, setAccent] = useLocalStorage("bg_accent", "#ff5a2c");
