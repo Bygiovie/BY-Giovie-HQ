@@ -2,15 +2,6 @@
 
 const WALLPAPERS = [
   { id: "karina", type: "image", value: "assets/wallpaper-karina.jpg", thumb: "assets/wallpaper-karina.jpg" },
-  // fondos fijos del repo (viajan a cualquier dispositivo) — carpeta fondos/
-  { id: "ballet",       type: "image", value: "fondos/Firefly_Gemini Flash_- ._- _- --`--( ballet chica )--`--__score_9,score_8_up,score_7_up,cute face,,tongton 336863.png", thumb: "fondos/Firefly_Gemini Flash_- ._- _- --`--( ballet chica )--`--__score_9,score_8_up,score_7_up,cute face,,tongton 336863.png" },
-  { id: "karina-arm1080", type: "image", value: "fondos/celebrity_karina_aespa_girl_group_armageddon-wallpaper-1920x1080.jpg", thumb: "fondos/celebrity_karina_aespa_girl_group_armageddon-wallpaper-1920x1080.jpg" },
-  { id: "karina-arm-a", type: "image", value: "fondos/karina-aespa-armageddon-my-power-4k-wallpaper-uhdpaper.com-506@0@j.jpg", thumb: "fondos/karina-aespa-armageddon-my-power-4k-wallpaper-uhdpaper.com-506@0@j.jpg" },
-  { id: "karina-arm-b", type: "image", value: "fondos/karina-aespa-armageddon-my-power-4k-wallpaper-uhdpaper.com-510@0@j.jpg", thumb: "fondos/karina-aespa-armageddon-my-power-4k-wallpaper-uhdpaper.com-510@0@j.jpg" },
-  { id: "karina-bt-a",  type: "image", value: "fondos/karina-aespa-better-things-4k-wallpaper-uhdpaper.com-662@1@l.jpg", thumb: "fondos/karina-aespa-better-things-4k-wallpaper-uhdpaper.com-662@1@l.jpg" },
-  { id: "karina-bt-b",  type: "image", value: "fondos/karina-aespa-better-things-4k-wallpaper-uhdpaper.com-663@1@l.jpg", thumb: "fondos/karina-aespa-better-things-4k-wallpaper-uhdpaper.com-663@1@l.jpg" },
-  { id: "karina-life-a", type: "image", value: "fondos/karina-aespa-live-my-life-4k-wallpaper-uhdpaper.com-389@0@j.jpg", thumb: "fondos/karina-aespa-live-my-life-4k-wallpaper-uhdpaper.com-389@0@j.jpg" },
-  { id: "karina-life-b", type: "image", value: "fondos/karina-aespa-live-my-life-4k-wallpaper-uhdpaper.com-391@0@j.jpg", thumb: "fondos/karina-aespa-live-my-life-4k-wallpaper-uhdpaper.com-391@0@j.jpg" },
   { id: "ember",  type: "gradient",
     value: "radial-gradient(130% 120% at 18% 12%, #2c0f08 0%, #0a0a0c 58%), linear-gradient(135deg, rgba(255,90,44,0.18), transparent 60%)",
     thumb: "linear-gradient(140deg,#ff5a2c,#1a0a08)" },
@@ -52,7 +43,7 @@ function SettingsDrawer(props) {
   const {
     onClose, name, setName, city, setCity, logo, setLogo,
     theme, setTheme, accent, setAccent,
-    wallpaper, setWallpaper, userWallpapers, setUserWallpapers, bgFit, setBgFit,
+    wallpaper, setWallpaper, userWallpapers, setUserWallpapers,
     blur, setBlur, dim, setDim, shortcuts, setShortcuts, vis, setVis, onEditLayout,
   } = props;
 
@@ -85,20 +76,25 @@ function SettingsDrawer(props) {
     if (!f) return;
     setErr("");
     try {
-      // guardar SIEMPRE el archivo original tal cual (sin recomprimir ni reescalar).
-      // IndexedDB aguanta archivos grandes; así conservas la imagen original.
-      if (f.size > 40 * 1024 * 1024) {
-        setErr("El archivo es muy grande (máx ~40MB). Para algo más pesado, pega una URL.");
-        e.target.value = ""; return;
+      const isAnim = /gif|webp/i.test(f.type) || f.type.startsWith("video/");
+      if (isAnim) {
+        // preservar animación: guardar el archivo tal cual (sin recomprimir)
+        if (f.size > 8 * 1024 * 1024) {
+          setErr("El archivo animado es muy grande para guardarlo aquí (máx ~8MB). Usa una URL.");
+          e.target.value = ""; return;
+        }
+        const dataURL = await window.fileToDataURL(f);
+        const type = f.type.startsWith("video/") ? "video" : "image";
+        const w = { id: "u_" + Date.now().toString(36), type, value: dataURL, thumb: type === "video" ? null : dataURL, user: true, animated: true };
+        setUserWallpapers((list) => [w, ...list]);
+        setWallpaper(w);
+      } else {
+        // imagen estática: alta calidad, casi sin pérdida
+        const dataURL = await window.resizeImageFile(f, 3840, 0.95);
+        const w = { id: "u_" + Date.now().toString(36), type: "image", value: dataURL, thumb: dataURL, user: true };
+        setUserWallpapers((list) => [w, ...list]);
+        setWallpaper(w);
       }
-      const dataURL = await window.fileToDataURL(f);
-      const isVideo = f.type.startsWith("video/");
-      const isAnim = isVideo || /gif|webp/i.test(f.type);
-      const type = isVideo ? "video" : "image";
-      const w = { id: "u_" + Date.now().toString(36), type, value: dataURL,
-        thumb: isVideo ? null : dataURL, user: true, animated: isAnim };
-      setUserWallpapers((list) => [w, ...list]);
-      setWallpaper(w);
     } catch (e2) { setErr("No se pudo cargar la imagen."); }
     e.target.value = "";
   };
@@ -184,7 +180,11 @@ function SettingsDrawer(props) {
         <div className="drawer-sec">
           <div className="sec-t">Fondo</div>
           <div className="wp-grid">
-            {/* fondos subidos primero (el más reciente arriba), luego los fijos */}
+            {WALLPAPERS.map((w) => (
+              <button key={w.id} className={"wp" + (wallpaper.id === w.id ? " on" : "")}
+                style={{ background: w.type === "image" ? `url("${w.thumb}") center/cover` : w.thumb }}
+                onClick={() => setWallpaper(w)} title={w.id} />
+            ))}
             {userWallpapers.map((w) => (
               <div key={w.id} className={"wp user" + (wallpaper.id === w.id ? " on" : "")}
                 style={w.type === "video" ? { background: "#0a0a0c" } : { background: `url("${w.thumb}") center/cover` }}
@@ -194,24 +194,12 @@ function SettingsDrawer(props) {
                 <button className="wp-del" onClick={(e) => { e.stopPropagation(); delUserWp(w.id); }}>×</button>
               </div>
             ))}
-            {WALLPAPERS.map((w) => (
-              <button key={w.id} className={"wp" + (wallpaper.id === w.id ? " on" : "")}
-                style={{ background: w.type === "image" ? `url("${w.thumb}") center/cover` : w.thumb }}
-                onClick={() => setWallpaper(w)} title={w.id} />
-            ))}
           </div>
 
           <button className="upload-btn" onClick={() => fileRef.current && fileRef.current.click()}>
             <window.IcUpload /> Subir desde el dispositivo
           </button>
           <input ref={fileRef} type="file" accept="image/*,video/mp4,video/webm,video/ogg" style={{ display: "none" }} onChange={onFile} />
-
-          <Row label="Ajuste del fondo" sub="Completo no recorta la imagen"><span /></Row>
-          <div className="seg" style={{ marginTop: -6, marginBottom: 4 }}>
-            {[["cover", "Llenar"], ["contain", "Completo"]].map(([v, l]) => (
-              <button key={v} className={bgFit === v ? "on" : ""} onClick={() => setBgFit(v)}>{l}</button>
-            ))}
-          </div>
 
           <div className="field" style={{ marginTop: 12, marginBottom: 0, display: "flex", gap: 8 }}>
             <input value={customWp} placeholder="URL de imagen o vídeo (.jpg .gif .mp4 .webm)"

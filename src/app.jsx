@@ -1,6 +1,6 @@
 /* app.jsx — grid layout, per-component config, customize mode, controls */
 
-const { useLocalStorage, useIndexedState } = window;
+const { useLocalStorage } = window;
 
 const COMPONENTS = [
   { id: "brand", label: "Marca" },
@@ -12,16 +12,17 @@ const COMPONENTS = [
   { id: "weather", label: "Clima" },
 ];
 
-// posición libre: x / y en % del escenario (esquina superior izquierda del componente)
+// posición: anclaje por bordes (ax/ay) + desplazamiento en px (ox/oy)
+//   ax: "left" | "center" | "right"   ·   ay: "top" | "center" | "bottom"
+// así los elementos quedan pegados a su borde y NO se descuadran al cambiar de tamaño.
 const DEFAULT_LAYOUT = {
-  brand:     { x: 2,  y: 4,  style: "auto", size: 0.88, opacity: 1, color: null },
-  greeting:  { x: 3,  y: 19, style: "auto", size: 1,    opacity: 1, color: null },
-  clock:     { x: 2.5, y: 27, style: "auto", size: 0.92, opacity: 1, color: null },
-  date:      { x: 3,  y: 47, style: "auto", size: 1,    opacity: 1, color: null },
-  search:    { x: 3,  y: 56, style: "auto", size: 1,    opacity: 1, color: null },
-  // x = borde DERECHO (el dock se ancla a la derecha y crece hacia la izquierda)
-  shortcuts: { x: 98, y: 85, style: "auto", size: 1,    opacity: 1, color: null },
-  weather:   { x: 73, y: 7,  style: "auto", size: 0.95, opacity: 1, color: null },
+  brand:     { ax: "left",   ox: 22, ay: "top",    oy: 20,  style: "auto", size: 0.88, opacity: 1, color: null },
+  greeting:  { ax: "left",   ox: 26, ay: "top",    oy: 150, style: "auto", size: 1,    opacity: 1, color: null },
+  clock:     { ax: "left",   ox: 22, ay: "top",    oy: 205, style: "auto", size: 0.92, opacity: 1, color: null },
+  date:      { ax: "left",   ox: 26, ay: "top",    oy: 360, style: "auto", size: 1,    opacity: 1, color: null },
+  search:    { ax: "left",   ox: 26, ay: "top",    oy: 425, style: "auto", size: 1,    opacity: 1, color: null },
+  shortcuts: { ax: "center", ox: 0,  ay: "bottom", oy: 34,  style: "auto", size: 1,    opacity: 1, color: null },
+  weather:   { ax: "right",  ox: 22, ay: "top",    oy: 74,  style: "auto", size: 0.95, opacity: 1, color: null },
 };
 
 function Brand({ logo }) {
@@ -40,54 +41,87 @@ function Brand({ logo }) {
 
 function Cell({ comp, cfg, customizing, stageRef, onGear, onMove, children }) {
   const ref = React.useRef(null);
-  const isDock = comp.id === "shortcuts"; // anclado por el borde derecho
-  const [drag, setDrag] = React.useState(null); // {x, y} % while dragging
+  const scaleRef = React.useRef(null);
+  const [drag, setDrag] = React.useState(null); // {left, top} px relativos al stage durante el arrastre
+  const [pos, setPos] = React.useState(null);   // {left, top} px calculados desde el anclaje
+
+  // calcula la posición real (px) a partir del anclaje + tamaño VISIBLE medido.
+  // se recalcula al cambiar tamaño de ventana o del componente, manteniendo
+  // cada elemento pegado a su borde sin saltos ni descuadres.
+  React.useLayoutEffect(() => {
+    const compute = () => {
+      const stage = stageRef.current, el = scaleRef.current;
+      if (!stage || !el) return;
+      const g = stage.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      const vw = r.width, vh = r.height;
+      const ax = cfg.ax || "left", ay = cfg.ay || "top";
+      const ox = cfg.ox != null ? cfg.ox : 22, oy = cfg.oy != null ? cfg.oy : 22;
+      let left = ax === "left" ? ox : ax === "right" ? g.width - ox - vw : (g.width - vw) / 2 + ox;
+      let top = ay === "top" ? oy : ay === "bottom" ? g.height - oy - vh : (g.height - vh) / 2 + oy;
+      left = Math.max(0, Math.min(left, Math.max(0, g.width - vw)));
+      top = Math.max(0, Math.min(top, Math.max(0, g.height - vh)));
+      setPos({ left, top });
+    };
+    compute();
+    const ro = new ResizeObserver(compute);
+    if (scaleRef.current) ro.observe(scaleRef.current);
+    window.addEventListener("resize", compute);
+    return () => { ro.disconnect(); window.removeEventListener("resize", compute); };
+  }, [cfg.ax, cfg.ay, cfg.ox, cfg.oy, cfg.size]);
 
   const down = (e) => {
     if (!customizing) return;
     if (e.target.closest(".cell-gear")) return;
-    const r = ref.current.getBoundingClientRect();
-    // tamaño VISIBLE (escalado): .cell-scale incluye su transform: scale()
-    const scaleEl = ref.current.querySelector(".cell-scale");
-    const vis = scaleEl ? scaleEl.getBoundingClientRect() : r;
-    const ox = e.clientX - r.left, oy = e.clientY - r.top, w = vis.width, h = vis.height;
+    const stage = stageRef.current;
+    if (!stage) return;
+    const vis = scaleRef.current.getBoundingClientRect();
+    const grabX = e.clientX - vis.left, grabY = e.clientY - vis.top;
+    const w = vis.width, h = vis.height;
     const sx = e.clientX, sy = e.clientY;
     let moved = false, last = null;
     const onMv = (ev) => {
-      if (!stageRef.current) return;
+      const g = stage.getBoundingClientRect();
       if (!moved && Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) > 4) moved = true;
       if (!moved) return;
-      const g = stageRef.current.getBoundingClientRect();
-      let left = ev.clientX - ox - g.left;
-      let top = ev.clientY - oy - g.top;
+      let left = ev.clientX - grabX - g.left;
+      let top = ev.clientY - grabY - g.top;
       left = Math.max(0, Math.min(left, g.width - w));
       top = Math.max(0, Math.min(top, g.height - h));
-      // para el dock guardamos el borde DERECHO (left + ancho) en %
-      const xPct = isDock ? ((left + w) / g.width) * 100 : (left / g.width) * 100;
-      last = { x: xPct, y: (top / g.height) * 100 };
-      setDrag(last);
+      last = { left, top, w, h };
+      setDrag({ left, top });
     };
     const onUp = () => {
       document.removeEventListener("pointermove", onMv);
       document.removeEventListener("pointerup", onUp);
-      if (moved && last) onMove(comp.id, last);
+      if (moved && last) {
+        const g = stage.getBoundingClientRect();
+        const cx = last.left + last.w / 2, cy = last.top + last.h / 2;
+        let ax, ox;
+        if (cx < g.width / 3) { ax = "left"; ox = Math.round(last.left); }
+        else if (cx > g.width * 2 / 3) { ax = "right"; ox = Math.round(g.width - (last.left + last.w)); }
+        else { ax = "center"; ox = Math.round(cx - g.width / 2); }
+        let ay, oy;
+        if (cy < g.height / 3) { ay = "top"; oy = Math.round(last.top); }
+        else if (cy > g.height * 2 / 3) { ay = "bottom"; oy = Math.round(g.height - (last.top + last.h)); }
+        else { ay = "center"; oy = Math.round(cy - g.height / 2); }
+        onMove(comp.id, { ax, ox, ay, oy });
+      }
       setDrag(null);
     };
     document.addEventListener("pointermove", onMv);
     document.addEventListener("pointerup", onUp);
   };
 
-  const x = drag ? drag.x : (cfg.x != null ? cfg.x : 4);
-  const y = drag ? drag.y : (cfg.y != null ? cfg.y : 4);
-
-  const cellStyle = isDock
-    ? { right: (100 - x) + "%", top: y + "%", transform: "none" }
-    : { left: x + "%", top: y + "%", transform: "none" };
+  const place = drag || pos;
+  const cellStyle = place
+    ? { left: place.left + "px", top: place.top + "px", right: "auto", bottom: "auto", transform: "none" }
+    : { left: (cfg.ox != null ? cfg.ox : 22) + "px", top: (cfg.oy != null ? cfg.oy : 22) + "px", opacity: 0 };
   if (cfg.color) cellStyle["--accent"] = cfg.color;
 
   const scaleStyle = {
     transform: `scale(${cfg.size})`,
-    transformOrigin: isDock ? "top right" : "top left",
+    transformOrigin: "top left",
     opacity: cfg.opacity,
   };
 
@@ -103,7 +137,7 @@ function Cell({ comp, cfg, customizing, stageRef, onGear, onMove, children }) {
           <window.IcSliders />
         </button>
       )}
-      <div className="cell-scale" style={scaleStyle}>{children}</div>
+      <div ref={scaleRef} className="cell-scale" style={scaleStyle}>{children}</div>
     </div>
   );
 }
@@ -154,13 +188,8 @@ function App() {
   const [searchAlign, setSearchAlign] = useLocalStorage("bg_search_align", "left");
 
   const [shortcuts, setShortcuts] = useLocalStorage("bg_shortcuts", window.DEFAULT_SHORTCUTS);
-  // Fondos en IndexedDB: las imágenes en base64 superan el tope de localStorage
-  // (~5MB) y se perdían al recargar. IndexedDB las conserva.
-  const [wallpaper, setWallpaper] = useIndexedState("bg_wallpaper", window.WALLPAPERS[0]);
-  const [userWallpapers, setUserWallpapers] = useIndexedState("bg_user_wp", []);
-  // ajuste del fondo: "contain" (foto completa, sin recortar ni zoom) | "cover" (llena, recorta)
-  // por defecto Completo: se ve la imagen entera sin cortes
-  const [bgFit, setBgFit] = useLocalStorage("bg_fit", "contain");
+  const [wallpaper, setWallpaper] = useLocalStorage("bg_wallpaper", window.WALLPAPERS[0]);
+  const [userWallpapers, setUserWallpapers] = useLocalStorage("bg_user_wp", []);
 
   const [theme, setTheme] = useLocalStorage("bg_theme", "glass");
   const [accent, setAccent] = useLocalStorage("bg_accent", "#ff5a2c");
@@ -170,17 +199,7 @@ function App() {
   const [vis, setVis] = useLocalStorage("bg_vis_v2", {
     brand: true, greeting: true, clock: true, date: true, search: true, shortcuts: true, weather: true,
   });
-  const [layout, setLayout] = useLocalStorage("bg_layout_free", DEFAULT_LAYOUT);
-
-  // migración única: el dock pasó de anclarse por la izquierda a la derecha.
-  // Reseteamos solo su posición al nuevo default (abajo-derecha) una vez.
-  const [dockAnchored, setDockAnchored] = useLocalStorage("bg_dock_anchor_v2", false);
-  React.useEffect(() => {
-    if (!dockAnchored) {
-      setLayout((l) => ({ ...l, shortcuts: { ...l.shortcuts, x: DEFAULT_LAYOUT.shortcuts.x, y: DEFAULT_LAYOUT.shortcuts.y } }));
-      setDockAnchored(true);
-    }
-  }, [dockAnchored]);
+  const [layout, setLayout] = useLocalStorage("bg_layout_anchor", DEFAULT_LAYOUT);
 
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [customizing, setCustomizing] = React.useState(false);
@@ -198,10 +217,8 @@ function App() {
 
   const isVideoWp = wallpaper.type === "video" ||
     (wallpaper.type === "image" && /\.(mp4|webm|ogv|ogg|mov|m4v)(\?|#|$)/i.test(wallpaper.value || ""));
-  // en "contain" mostramos la foto entera (sin el zoom 1.04 que recortaría bordes)
   const bgStyle = wallpaper.type === "image" && !isVideoWp
-    ? { backgroundImage: `url("${wallpaper.value}")`, backgroundSize: bgFit,
-        transform: bgFit === "contain" ? "scale(1)" : "scale(1.04)" }
+    ? { backgroundImage: `url("${wallpaper.value}")` }
     : (wallpaper.type === "gradient" ? { backgroundImage: wallpaper.value } : {});
 
   const blurPx = Math.round((blur / 100) * 40);
@@ -221,13 +238,8 @@ function App() {
   return (
     <div className="stage" data-sty={theme} style={{ "--accent": accent, "--panel-blur": blurPx + "px", "--dim": dim / 100 }}>
       {isVideoWp
-        ? <video className="bg bg-video" src={wallpaper.value} autoPlay loop muted playsInline key={wallpaper.value} style={{ objectFit: bgFit }} />
-        : <>
-            {/* relleno borroso para fotos que no llenan (modo Completo): sin barras negras */}
-            {wallpaper.type === "image" && bgFit === "contain" &&
-              <div className="bg bg-fill" style={{ backgroundImage: `url("${wallpaper.value}")` }} />}
-            <div className="bg" style={bgStyle} />
-          </>}
+        ? <video className="bg bg-video" src={wallpaper.value} autoPlay loop muted playsInline key={wallpaper.value} />
+        : <div className="bg" style={bgStyle} />}
       <div className="bg-scrim" />
       <div className="bg-grain" />
 
@@ -271,7 +283,6 @@ function App() {
           accent={accent} setAccent={setAccent}
           wallpaper={wallpaper} setWallpaper={setWallpaper}
           userWallpapers={userWallpapers} setUserWallpapers={setUserWallpapers}
-          bgFit={bgFit} setBgFit={setBgFit}
           blur={blur} setBlur={setBlur}
           dim={dim} setDim={setDim}
           shortcuts={shortcuts} setShortcuts={setShortcuts}

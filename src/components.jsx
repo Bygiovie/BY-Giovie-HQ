@@ -192,66 +192,6 @@ function resizeImageFile(file, maxDim = 1920, quality = 0.82) {
   });
 }
 
-// ---------- IndexedDB KV (para datos grandes: fondos subidos) ----------
-// localStorage tiene ~5MB de tope; las imágenes en base64 lo revientan y se
-// pierden al recargar. IndexedDB aguanta cientos de MB.
-const IDB_NAME = "bg_store", IDB_STORE = "kv";
-function idbOpen() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(IDB_NAME, 1);
-    req.onupgradeneeded = () => {
-      if (!req.result.objectStoreNames.contains(IDB_STORE)) req.result.createObjectStore(IDB_STORE);
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-async function idbGet(key) {
-  const db = await idbOpen();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(IDB_STORE, "readonly");
-    const r = tx.objectStore(IDB_STORE).get(key);
-    r.onsuccess = () => resolve(r.result);
-    r.onerror = () => reject(r.error);
-  });
-}
-async function idbSet(key, val) {
-  const db = await idbOpen();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(IDB_STORE, "readwrite");
-    tx.objectStore(IDB_STORE).put(val, key);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-// Igual que useLocalStorage pero persistiendo en IndexedDB (datos grandes).
-// Migra automáticamente lo que hubiera en localStorage la primera vez.
-function useIndexedState(key, initial) {
-  const [v, setV] = React.useState(initial);
-  const ready = React.useRef(false);
-  React.useEffect(() => {
-    let alive = true;
-    idbGet(key).then((stored) => {
-      if (!alive) return;
-      if (stored !== undefined) {
-        setV(stored);
-      } else {
-        try {
-          const ls = localStorage.getItem(key);
-          if (ls != null) { const parsed = JSON.parse(ls); setV(parsed); idbSet(key, parsed).catch(() => {}); }
-        } catch {}
-      }
-      ready.current = true;
-    }).catch(() => { ready.current = true; });
-    return () => { alive = false; };
-  }, [key]);
-  React.useEffect(() => {
-    if (ready.current) idbSet(key, v).catch(() => {});
-  }, [key, v]);
-  return [v, setV];
-}
-
 // registry for brand icons used by shortcuts
 const BRAND_ICONS = {
   youtube: BrYouTube, github: BrGitHub, gmail: BrGmail,
@@ -259,7 +199,7 @@ const BRAND_ICONS = {
 };
 
 Object.assign(window, {
-  useLocalStorage, useIndexedState, idbGet, idbSet, useNow,
+  useLocalStorage, useNow,
   IcGear, IcArrow, IcChevron, IcPlus, IcEdit, IcCheck,
   IcUpload, IcTrash, IcStar, IcLayout, IcSliders,
   EngGoogle, EngGemini, EngPerplexity, EngYouTube, EngGitHub,

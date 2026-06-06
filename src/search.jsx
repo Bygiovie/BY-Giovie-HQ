@@ -68,19 +68,22 @@ function SearchBar({ engines, setEngines, activeId, setActiveId, multi, setMulti
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  const searchWith = (engList, v) => {
-    const targets = engList.length ? engList : [primary];
-    targets.forEach((e) => window.open(buildUrl(e, v), "_blank", "noopener"));
-  };
-
   const go = () => {
     const v = q.trim();
     if (!v) return;
+    // URL directa → misma pestaña
     if (isUrl(v)) {
-      window.open(/^https?:\/\//i.test(v) ? v : "https://" + v, "_blank", "noopener");
+      window.location.assign(/^https?:\/\//i.test(v) ? v : "https://" + v);
       return;
     }
-    searchWith(multi ? enabled : [primary], v);
+    // motores a usar
+    let list = multi ? enabled : [primary];
+    if (!list.length) list = [primary];
+    const prim = list.find((e) => e.id === activeId) || list[0];
+    const rest = list.filter((e) => e !== prim);
+    // los secundarios en pestañas nuevas, el principal en la misma (al final)
+    rest.forEach((e) => window.open(buildUrl(e, v), "_blank", "noopener"));
+    window.location.assign(buildUrl(prim, v));
   };
 
   const cycleEngine = (dir = 1) => {
@@ -173,13 +176,8 @@ function SearchBar({ engines, setEngines, activeId, setActiveId, multi, setMulti
         <div className="eng-chips">
           {enabled.map((e) => (
             <button key={e.id} className={"eng-chip" + (e.id === activeId ? " primary" : "")}
-              title={`Buscar en ${e.name}`}
-              onClick={() => {
-                const v = q.trim();
-                if (!v) { window.open(buildUrl(e, "").replace(/[?&][^=]*=$/, ""), "_blank", "noopener"); return; }
-                if (isUrl(v)) { window.open(/^https?:\/\//i.test(v) ? v : "https://" + v, "_blank", "noopener"); return; }
-                window.open(buildUrl(e, v), "_blank", "noopener");
-              }}>
+              title={`Usar ${e.name} como motor`}
+              onClick={() => { setActiveId(e.id); inputRef.current && inputRef.current.focus(); }}>
               <span className="eic"><EngineIcon eng={e} /></span>
               {e.name}
             </button>
