@@ -16,7 +16,7 @@ const COMPONENTS = [
 //   ax: "left" | "center" | "right"   ·   ay: "top" | "center" | "bottom"
 // así los elementos quedan pegados a su borde y NO se descuadran al cambiar de tamaño.
 const DEFAULT_LAYOUT = {
-  brand:     { ax: "left",   ox: 22, ay: "top",    oy: 20,  style: "auto", size: 0.88, opacity: 1, color: null },
+  brand:     { ax: "left",   ox: 22, ay: "top",    oy: 20,  style: "auto", size: 0.88, opacity: null, color: null },
   greeting:  { ax: "left",   ox: 26, ay: "top",    oy: 150, style: "auto", size: 1,    opacity: 1, color: null },
   clock:     { ax: "left",   ox: 22, ay: "top",    oy: 205, style: "auto", size: 0.92, opacity: 1, color: null },
   date:      { ax: "left",   ox: 26, ay: "top",    oy: 360, style: "auto", size: 1,    opacity: 1, color: null },
@@ -224,9 +224,9 @@ function App() {
   const blurPx = Math.round((blur / 100) * 40);
 
   const slots = {
-    brand: <div onClick={() => setSettingsOpen(true)} style={{ cursor: 'pointer' }}>
-    <Brand logo={logo} />
-  </div>,
+    brand: <div onClick={() => {...}} style={{ cursor: 'pointer' }}>
+      <Brand logo={logo} textColor={cfgFor('brand').textColor} />
+    </div>,
     greeting: <window.Greeting name={name} />,
     clock: <window.ClockTime />,
     date: <window.DateBar />,
