@@ -224,18 +224,31 @@ function App() {
   const blurPx = Math.round((blur / 100) * 40);
 
   const slots = {
-    brand: <div onClick= setSettingsOpen(true) style={{ cursor: 'pointer' }}>
+  // CORRECCIÓN: Se asigna directamente a la clave 'brand' y se añade la coma al final
+  brand: (
+    <div onClick={() => setSettingsOpen(true)} style={{ cursor: 'pointer' }}>
       <Brand logo={logo} textColor={cfgFor('brand').textColor} />
-    </div>,
-    greeting: <window.Greeting name={name} />,
-    clock: <window.ClockTime />,
-    date: <window.DateBar />,
-    search: <window.SearchBar engines={engines} setEngines={setEngines}
-      activeId={activeEngine} setActiveId={setActiveEngine} multi={multiEngine} setMulti={setMultiEngine}
-      align={searchAlign} setAlign={setSearchAlign} />,
-    shortcuts: <window.ShortcutsDock shortcuts={shortcuts} />,
-    weather: <window.WeatherWidget city={city} onClick={() => setSettingsOpen(true)} />,
-  };
+    </div>
+  ), 
+  
+  greeting: <window.Greeting name={name} />,
+  clock: <window.ClockTime />,
+  date: <window.DateBar />,
+  search: (
+    <window.SearchBar 
+      engines={engines} 
+      setEngines={setEngines}
+      activeId={activeEngine} 
+      setActiveId={setActiveEngine} 
+      multi={multiEngine} 
+      setMulti={setMultiEngine}
+      align={searchAlign} 
+      setAlign={setSearchAlign} 
+    />
+  ),
+  shortcuts: <window.ShortcutsDock shortcuts={shortcuts} />,
+  weather: <window.WeatherWidget city={city} onClick={() => setSettingsOpen(true)} />,
+};
 
   return (
     <div className="stage" data-sty={theme} style={{ "--accent": accent, "--panel-blur": blurPx + "px", "--dim": dim / 100 }}>
