@@ -224,7 +224,9 @@ function App() {
   const blurPx = Math.round((blur / 100) * 40);
 
   const slots = {
-    brand: <Brand logo={logo} />,
+    brand: <div onClick={() => setSettingsOpen(true)} style={{ cursor: 'pointer' }}>
+    <Brand logo={logo} />
+  </div>,
     greeting: <window.Greeting name={name} />,
     clock: <window.ClockTime />,
     date: <window.DateBar />,
@@ -251,15 +253,6 @@ function App() {
           </Cell>
         ))}
       </div>
-
-      {/* hint mientras editas (sin barra inferior; el engranaje sale del modo) */}
-
-      {/* botón flotante único: Ajustes / Salir de edición */}
-      <FloatButton pos={gearPos} setPos={setGearPos}
-        title={customizing ? "Terminar edición" : "Ajustes"} spin={!customizing} active={customizing}
-        onClick={() => { if (customizing) { setCustomizing(false); setPopover(null); } else { setSettingsOpen(true); } }}>
-        {customizing ? <window.IcCheck /> : <window.IcGear />}
-      </FloatButton>
 
       {/* per-component popover */}
       {popover && (
