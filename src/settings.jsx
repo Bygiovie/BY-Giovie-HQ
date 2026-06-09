@@ -12,7 +12,6 @@ const WALLPAPERS = [
   { id: "karina-dirty", type: "image", value: "fondos/karina-dirty-work.jpg",      thumb: "./fondos/karina-dirty-work.jpg" },
   { id: "karina-life-a", type: "image", value: "fondos/karina-live-my-life-a.jpg", thumb: "./fondos/karina-live-my-life-a.jpg" },
   { id: "karina-life-b", type: "image", value: "fondos/karina-live-my-life-b.jpg", thumb: "./fondos/karina-live-my-life-b.jpg" },
-  { id: "ember",  type: "gradient",
 
 const ACCENT_PRESETS = [
   "#ff5a2c", "#ff2d6f", "#ffd23c", "#b6ff3c",
