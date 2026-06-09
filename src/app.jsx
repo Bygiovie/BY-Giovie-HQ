@@ -254,6 +254,14 @@ function App() {
         ))}
       </div>
 
+{/* botón para salir de edición */}
+{customizing && (
+  <FloatButton pos={gearPos} setPos={setGearPos}
+    title="Terminar edición" 
+    onClick={() => { setCustomizing(false); setPopover(null); }}>
+    <window.IcCheck />
+  </FloatButton>
+)}
       {/* per-component popover */}
       {popover && (
         <window.ComponentPopover
