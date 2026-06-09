@@ -596,6 +596,10 @@ button { font-family: inherit; }
   outline: none;
   transition: border-color 0.2s;
 }
+.field select option {
+  background: #1a1a20;
+  color: var(--ink);
+}
 .field input:focus, .field select:focus { border-color: color-mix(in srgb, var(--accent) 65%, transparent); }
 .modal-actions {
   display: flex;
